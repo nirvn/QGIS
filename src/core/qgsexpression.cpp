@@ -880,7 +880,7 @@ static QVariant fcnSubstr( const QVariantList& values, const QgsExpressionContex
   QString str = getStringValue( values.at( 0 ), parent );
   int from = getIntValue( values.at( 1 ), parent );
   int len = getIntValue( values.at( 2 ), parent );
-  return QVariant( str.mid( from -1, len ) );
+  return QVariant( str.mid( from, len ) );
 }
 
 static QVariant fcnRowNumber( const QVariantList&, const QgsExpressionContext* context, QgsExpression* parent )
