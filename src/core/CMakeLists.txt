@@ -375,6 +375,7 @@ SET(QGIS_CORE_SRCS
   layout/qgslayoutitemmapoverview.cpp
   layout/qgslayoutitemnodeitem.cpp
   layout/qgslayoutitempage.cpp
+  layout/qgslayoutitempicture.cpp
   layout/qgslayoutitempolygon.cpp
   layout/qgslayoutitempolyline.cpp
   layout/qgslayoutitemregistry.cpp
@@ -734,6 +735,7 @@ SET(QGIS_CORE_MOC_HDRS
   layout/qgslayoutitemmapoverview.h
   layout/qgslayoutitemnodeitem.h
   layout/qgslayoutitempage.h
+  layout/qgslayoutitempicture.h
   layout/qgslayoutitempolygon.h
   layout/qgslayoutitempolyline.h
   layout/qgslayoutitemregistry.h
