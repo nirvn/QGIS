@@ -1343,6 +1343,7 @@ QgisApp::~QgisApp()
   delete mWelcomePage;
 
   deletePrintComposers();
+  deleteLayoutDesigners();
   removeAnnotationItems();
 
   // cancel request for FileOpen events
@@ -7311,6 +7312,16 @@ void QgisApp::deletePrintComposers()
   }
 }
 
+void QgisApp::deleteLayoutDesigners()
+{
+  // need a copy, since mLayoutDesignerDialogs will be modified as we iterate
+  const QSet<QgsLayoutDesignerDialog *> dialogs = mLayoutDesignerDialogs;
+  for ( QgsLayoutDesignerDialog *dlg : dialogs )
+  {
+    dlg->close(); // will trigger delete
+  }
+}
+
 void QgisApp::setupLayoutManagerConnections()
 {
   QgsLayoutManager *manager = QgsProject::instance()->layoutManager();
@@ -10311,6 +10322,7 @@ void QgisApp::closeProject()
   closeAdditional3DMapCanvases();
 
   deletePrintComposers();
+  deleteLayoutDesigners();
   removeAnnotationItems();
   // clear out any stuff from project
   mMapCanvas->freeze( true );
