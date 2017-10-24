@@ -180,6 +180,7 @@ SET(QGIS_APP_SRCS
   layout/qgslayoutitemslistview.cpp
   layout/qgslayoutappmenuprovider.cpp
   layout/qgslayoutlabelwidget.cpp
+  layout/qgslayoutlegendlayersdialog.cpp
   layout/qgslayoutlegendwidget.cpp
   layout/qgslayoutmapwidget.cpp
   layout/qgslayoutmapgridwidget.cpp
@@ -386,6 +387,7 @@ SET (QGIS_APP_MOC_HDRS
   layout/qgslayoutitemslistview.h
   layout/qgslayoutlabelwidget.h
   layout/qgslayoutlegendwidget.h
+  layout/qgslayoutlegendlayersdialog.h
   layout/qgslayoutmapwidget.h
   layout/qgslayoutmapgridwidget.h
   layout/qgslayoutpagepropertieswidget.h
