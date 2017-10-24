@@ -168,7 +168,6 @@
 %Include layout/qgslayoutsize.sip
 %Include layout/qgslayoutsnapper.sip
 %Include layout/qgslayoutundocommand.sip
-%Include layout/qgslayoutundostack.sip
 %Include layout/qgslayoututils.sip
 %Include metadata/qgslayermetadata.sip
 %Include metadata/qgslayermetadatavalidator.sip
@@ -407,6 +406,7 @@
 %Include layout/qgslayoutguidecollection.sip
 %Include layout/qgslayoutitem.sip
 %Include layout/qgslayoutitemgroup.sip
+%Include layout/qgslayoutitemlabel.sip
 %Include layout/qgslayoutitemmap.sip
 %Include layout/qgslayoutitemmapgrid.sip
 %Include layout/qgslayoutitemmapitem.sip
@@ -421,6 +421,7 @@
 %Include layout/qgslayoutmodel.sip
 %Include layout/qgslayoutpagecollection.sip
 %Include layout/qgslayoutobject.sip
+%Include layout/qgslayoutundostack.sip
 %Include symbology/qgscptcityarchive.sip
 %Include symbology/qgssvgcache.sip
 %Include symbology/qgsstyle.sip
