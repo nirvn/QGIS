@@ -27,7 +27,7 @@ class QgsSublayersDialog : QDialog
     {
       int layerId;
       QString layerName;  //!< Name of the layer (not necessarily unique)
-      int count;
+      QString count;      //!< Number of features (might be unused)
       QString type;       //!< Extra type depending on the use (e.g. geometry type for vector sublayers)
     };
 

@@ -4604,7 +4604,7 @@ void QgisApp::askUserForOGRSublayers( QgsVectorLayer *layer )
       QgsSublayersDialog::LayerDefinition def;
       def.layerId = elements[0].toInt();
       def.layerName = elements[1];
-      def.count = elements[2].toInt();
+      def.count = elements[2];
       def.type = elements[3];
       if ( lastLayerId != def.layerId )
       {
