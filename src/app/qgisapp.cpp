@@ -11732,20 +11732,22 @@ void QgisApp::updateCrsStatusBar()
 // slot to update the progress bar in the status bar
 void QgisApp::showProgress( int progress, int totalSteps )
 {
-  if ( progress == totalSteps )
+  if ( progressTask && progress == totalSteps )
   {
-    mProgressBar->reset();
-    mProgressBar->hide();
+    progressTask->cancel();
+    progressTask = nullptr;
   }
   else
   {
-    //only call show if not already hidden to reduce flicker
-    if ( !mProgressBar->isVisible() )
+    if ( !progressTask )
     {
-      mProgressBar->show();
+      progressTask = new QgsProgressTask( QString( "progressing..." ) );
+      QgsApplication::taskManager()->addTask( progressTask );
     }
-    mProgressBar->setMaximum( totalSteps );
-    mProgressBar->setValue( progress );
+    else
+    {
+      progressTask->adjustProgress( progress / totalSteps * 100.0 );
+    }
   }
 }
 

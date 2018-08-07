@@ -101,6 +101,7 @@ class QgsVectorLayerTools;
 class QgsWelcomePage;
 class QgsOptionsWidgetFactory;
 class QgsStatusBar;
+class QgsProgressTask;
 
 class QgsUserProfileManagerWidgetFactory;
 
@@ -2254,6 +2255,8 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
 
     std::unique_ptr<QgsMapLayerAction> mDuplicateFeatureAction;
     std::unique_ptr<QgsMapLayerAction> mDuplicateFeatureDigitizeAction;
+
+    QgsProgressTask *progressTask = nullptr;
 
     int mProjOpen = 0;
 

@@ -351,6 +351,37 @@ class CORE_EXPORT QgsTask : public QObject
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsTask::Flags )
 
+
+class CORE_EXPORT QgsProgressTask : public QgsTask
+{
+    Q_OBJECT
+
+  public:
+    QgsProgressTask( const QString name = QString() )
+      : QgsTask( name )
+    {
+    }
+
+  public slots:
+
+    void adjustProgress( double progress )
+    {
+      setProgress( progress );
+    }
+
+  protected:
+
+    bool run() override
+    {
+      while ( !isCanceled() )
+      {
+        QCoreApplication::processEvents();
+      }
+      return isCanceled();
+    }
+};
+
+
 /**
  * \ingroup core
  * \class QgsTaskManager

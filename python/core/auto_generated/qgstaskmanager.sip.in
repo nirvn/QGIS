@@ -285,6 +285,26 @@ the task wants to update its progress. Calling will automatically emit the progr
 QFlags<QgsTask::Flag> operator|(QgsTask::Flag f1, QFlags<QgsTask::Flag> f2);
 
 
+
+class QgsProgressTask : QgsTask
+{
+
+%TypeHeaderCode
+#include "qgstaskmanager.h"
+%End
+  public:
+    QgsProgressTask( const QString name = QString() );
+
+  public slots:
+
+    void adjustProgress( double progress );
+
+  protected:
+
+    virtual bool run();
+};
+
+
 class QgsTaskManager : QObject
 {
 %Docstring
