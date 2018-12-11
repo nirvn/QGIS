@@ -30,6 +30,15 @@ QgsLayerTreeViewProxyStyle::QgsLayerTreeViewProxyStyle( QgsLayerTreeView *treeVi
 {
 }
 
+void QgsLayerTreeViewProxyStyle::drawItemText( QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole ) const
+{
+  QgsDebugMsg( "XXXXXXXXXXXXXXXXX" );
+  QgsDebugMsg( "XXXXXXXXXXXXXXXXX" );
+  QgsDebugMsg( "XXXXXXXXXXXXXXXXX" );
+  QgsDebugMsg( "XXXXXXXXXXXXXXXXX" );
+  QgsDebugMsg( "XXXXXXXXXXXXXXXXX" );
+  QProxyStyle::drawItemText( painter, rect, flags, pal, enabled, QString( "XXXXXXXXXXXXXXXXX" ), textRole );
+}
 
 QRect QgsLayerTreeViewProxyStyle::subElementRect( QStyle::SubElement element, const QStyleOption *option, const QWidget *widget ) const
 {
