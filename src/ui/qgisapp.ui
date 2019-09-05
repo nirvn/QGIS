@@ -516,7 +516,6 @@
    <addaction name="mActionZoomNext"/>
    <addaction name="mActionNewMapCanvas"/>
    <addaction name="mActionNewBookmark"/>
-   <addaction name="mActionShowBookmarks"/>
    <addaction name="mActionDraw"/>
   </widget>
   <widget class="QToolBar" name="mAttributesToolBar">
