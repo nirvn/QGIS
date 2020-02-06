@@ -556,7 +556,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                          QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
                          QgsFeatureSink::SinkFlags sinkFlags = nullptr
 #ifndef SIP_RUN
-                             , QString *newLayer = nullptr
+                             , QString *newLayer = nullptr,
+                         QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
 #endif
                        );
 
@@ -576,6 +577,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * \param layerName layer name. If let empty, it will be derived from the filename (added in QGIS 3.0)
      * \param action action on existing file (added in QGIS 3.0)
      * \param newLayer potentially modified layer name (output parameter) (added in QGIS 3.4)
+     * \param transformContext transform context, needed if the output file srs is forced to specific crs (added in QGIS 3.12)
      * \note not available in Python bindings
      */
     QgsVectorFileWriter( const QString &vectorFileName,
@@ -591,7 +593,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                          QgsVectorFileWriter::FieldValueConverter *fieldValueConverter,
                          const QString &layerName,
                          QgsVectorFileWriter::ActionOnExistingFile action,
-                         QString *newLayer = nullptr
+                         QString *newLayer = nullptr,
+                         QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
                        ) SIP_SKIP;
 
     //! QgsVectorFileWriter cannot be copied.
@@ -881,11 +884,15 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                QStringList layerOptions, QString *newFilename,
                QgsVectorFileWriter::FieldValueConverter *fieldValueConverter,
                const QString &layerName,
-               QgsVectorFileWriter::ActionOnExistingFile action, QString *newLayer, QgsFeatureSink::SinkFlags sinkFlags );
+               QgsVectorFileWriter::ActionOnExistingFile action, QString *newLayer, QgsFeatureSink::SinkFlags sinkFlags,
+               QgsCoordinateTransformContext transformContext );
     void resetMap( const QgsAttributeList &attributes );
 
     std::unique_ptr< QgsFeatureRenderer > mRenderer;
     QgsRenderContext mRenderContext;
+
+
+    std::unique_ptr< QgsCoordinateTransform > mCoordinateTransform;
 
     bool mUsingTransaction = false;
     bool supportsStringList = false;

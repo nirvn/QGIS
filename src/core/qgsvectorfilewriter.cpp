@@ -104,7 +104,8 @@ QgsVectorFileWriter::QgsVectorFileWriter(
   QString *newFilename,
   SymbologyExport symbologyExport,
   QgsFeatureSink::SinkFlags sinkFlags,
-  QString *newLayer
+  QString *newLayer,
+  QgsCoordinateTransformContext transformContext
 )
   : mError( NoError )
   , mWkbType( geometryType )
@@ -113,23 +114,26 @@ QgsVectorFileWriter::QgsVectorFileWriter(
 {
   init( vectorFileName, fileEncoding, fields,  geometryType,
         srs, driverName, datasourceOptions, layerOptions, newFilename, nullptr,
-        QString(), CreateOrOverwriteFile, newLayer, sinkFlags );
+        QString(), CreateOrOverwriteFile, newLayer, sinkFlags, transformContext );
 }
 
-QgsVectorFileWriter::QgsVectorFileWriter( const QString &vectorFileName,
-    const QString &fileEncoding,
-    const QgsFields &fields,
-    QgsWkbTypes::Type geometryType,
-    const QgsCoordinateReferenceSystem &srs,
-    const QString &driverName,
-    const QStringList &datasourceOptions,
-    const QStringList &layerOptions,
-    QString *newFilename,
-    QgsVectorFileWriter::SymbologyExport symbologyExport,
-    FieldValueConverter *fieldValueConverter,
-    const QString &layerName,
-    ActionOnExistingFile action,
-    QString *newLayer )
+QgsVectorFileWriter::QgsVectorFileWriter(
+  const QString &vectorFileName,
+  const QString &fileEncoding,
+  const QgsFields &fields,
+  QgsWkbTypes::Type geometryType,
+  const QgsCoordinateReferenceSystem &srs,
+  const QString &driverName,
+  const QStringList &datasourceOptions,
+  const QStringList &layerOptions,
+  QString *newFilename,
+  QgsVectorFileWriter::SymbologyExport symbologyExport,
+  FieldValueConverter *fieldValueConverter,
+  const QString &layerName,
+  ActionOnExistingFile action,
+  QString *newLayer,
+  QgsCoordinateTransformContext transformContext
+)
   : mError( NoError )
   , mWkbType( geometryType )
   , mSymbologyExport( symbologyExport )
@@ -137,7 +141,7 @@ QgsVectorFileWriter::QgsVectorFileWriter( const QString &vectorFileName,
 {
   init( vectorFileName, fileEncoding, fields, geometryType, srs, driverName,
         datasourceOptions, layerOptions, newFilename, fieldValueConverter,
-        layerName, action, newLayer, nullptr );
+        layerName, action, newLayer, nullptr, transformContext );
 }
 
 bool QgsVectorFileWriter::supportsFeatureStyles( const QString &driverName )
@@ -173,7 +177,8 @@ void QgsVectorFileWriter::init( QString vectorFileName,
                                 FieldValueConverter *fieldValueConverter,
                                 const QString &layerNameIn,
                                 ActionOnExistingFile action,
-                                QString *newLayer, SinkFlags sinkFlags )
+                                QString *newLayer, SinkFlags sinkFlags,
+                                QgsCoordinateTransformContext transformContext )
 {
   mRenderContext.setRendererScale( mSymbologyScale );
 
@@ -393,6 +398,17 @@ void QgsVectorFileWriter::init( QString vectorFileName,
   }
 
   // consider spatial reference system of the layer
+  if ( driverName == QLatin1String( "KML" ) || driverName == QLatin1String( "GPX" ) )
+  {
+    if ( srs.authid() != QStringLiteral( "EPSG:4326" ) )
+    {
+      // Those drivers outputs WGS84 geometries, let's align our output CRS to have QGIS take charge of geometry transformation
+      QgsCoordinateReferenceSystem wgs84 = QgsCoordinateReferenceSystem::fromEpsgId( 4326 );
+      mCoordinateTransform.reset( new QgsCoordinateTransform( srs, wgs84, transformContext ) );
+      srs = wgs84;
+    }
+  }
+
   if ( srs.isValid() )
   {
     QString srsWkt = srs.toWkt( QgsCoordinateReferenceSystem::WKT2_2018 );
@@ -2499,6 +2515,11 @@ gdal::ogr_feature_unique_ptr QgsVectorFileWriter::createFeature( const QgsFeatur
     {
       // build geometry from WKB
       QgsGeometry geom = feature.geometry();
+      if ( mCoordinateTransform )
+      {
+        // output dataset requires coordinate transform
+        geom.transform( *mCoordinateTransform );
+      }
 
       // turn single geometry to multi geometry if needed
       if ( QgsWkbTypes::flatType( geom.wkbType() ) != QgsWkbTypes::flatType( mWkbType ) &&
@@ -2735,7 +2756,6 @@ QgsVectorFileWriter::WriterError QgsVectorFileWriter::prepareWriteAsVectorFormat
     return ErrInvalidLayer;
   }
 
-
   if ( layer->renderer() )
     details.renderer.reset( layer->renderer()->clone() );
   details.sourceCrs = layer->crs();
@@ -2939,7 +2959,8 @@ QgsVectorFileWriter::WriterError QgsVectorFileWriter::writeAsVectorFormat( Prepa
         options.fieldValueConverter,
         options.layerName,
         options.actionOnExistingFile,
-        newLayer );
+        newLayer,
+        options.ct.context() );
   writer->setSymbologyScale( options.symbologyScale );
 
   if ( newFilename )
