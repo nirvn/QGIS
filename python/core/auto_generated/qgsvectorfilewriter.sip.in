@@ -399,20 +399,45 @@ Writes a layer out to a vector file.
 .. versionadded:: 3.0
 %End
 
-    QgsVectorFileWriter( const QString &vectorFileName,
-                         const QString &fileEncoding,
-                         const QgsFields &fields,
-                         QgsWkbTypes::Type geometryType,
-                         const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
-                         const QString &driverName = "GPKG",
-                         const QStringList &datasourceOptions = QStringList(),
-                         const QStringList &layerOptions = QStringList(),
-                         QString *newFilename = 0,
-                         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
-                         QgsFeatureSink::SinkFlags sinkFlags = 0
-                       );
+ QgsVectorFileWriter( const QString &vectorFileName,
+                                           const QString &fileEncoding,
+                                           const QgsFields &fields,
+                                           QgsWkbTypes::Type geometryType,
+                                           const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
+                                           const QString &driverName = "GPKG",
+                                           const QStringList &datasourceOptions = QStringList(),
+                                           const QStringList &layerOptions = QStringList(),
+                                           QString *newFilename = 0,
+                                           QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
+                                           QgsFeatureSink::SinkFlags sinkFlags = 0
+                                         );
 
 
+
+    static QgsVectorFileWriter *create( const QString &vectorFileName,
+                                        const QgsFields &fields,
+                                        QgsWkbTypes::Type geometryType,
+                                        const QgsCoordinateReferenceSystem &srs,
+                                        const QgsVectorFileWriter::SaveVectorOptions &options,
+                                        FieldValueConverter *fieldValueConverter = 0,
+                                        QgsFeatureSink::SinkFlags sinkFlags = 0,
+                                        QString *newFilename = 0,
+                                        QString *newLayer = 0 );
+%Docstring
+Create a new vector file writer.
+
+:param vectorFileName: file name to write to
+:param fields: fields to write
+:param geometryType: geometry type of output file
+:param srs: spatial reference system of output file
+:param options: save options
+:param fieldValueConverter: field value converter
+:param skinkFlags: feature sink flags
+:param newFilename: potentially modified file name (output parameter)
+:param newLayer: potentially modified layer name (output parameter)
+
+.. versionadded:: 3.10.3
+%End
 
     struct FilterFormatDetails
     {

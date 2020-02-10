@@ -543,23 +543,26 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                                                                );
 #endif
 
-    //! Create a new vector file writer
-    QgsVectorFileWriter( const QString &vectorFileName,
-                         const QString &fileEncoding,
-                         const QgsFields &fields,
-                         QgsWkbTypes::Type geometryType,
-                         const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
-                         const QString &driverName = "GPKG",
-                         const QStringList &datasourceOptions = QStringList(),
-                         const QStringList &layerOptions = QStringList(),
-                         QString *newFilename = nullptr,
-                         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
-                         QgsFeatureSink::SinkFlags sinkFlags = nullptr
+    /**
+     * Create a new vector file writer
+     * \deprecated since QGIS 3.10.3, use the QgsVectorFileWriter::create function.
+     */
+    Q_DECL_DEPRECATED QgsVectorFileWriter( const QString &vectorFileName,
+                                           const QString &fileEncoding,
+                                           const QgsFields &fields,
+                                           QgsWkbTypes::Type geometryType,
+                                           const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
+                                           const QString &driverName = "GPKG",
+                                           const QStringList &datasourceOptions = QStringList(),
+                                           const QStringList &layerOptions = QStringList(),
+                                           QString *newFilename = nullptr,
+                                           QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
+                                           QgsFeatureSink::SinkFlags sinkFlags = nullptr
 #ifndef SIP_RUN
-                             , QString *newLayer = nullptr,
-                         QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
+                                               , QString *newLayer = nullptr,
+                                           QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
 #endif
-                       );
+                                         );
 
     /**
      * Create a new vector file writer.
@@ -579,6 +582,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * \param newLayer potentially modified layer name (output parameter) (added in QGIS 3.4)
      * \param transformContext transform context, needed if the output file srs is forced to specific crs (added in QGIS 3.12)
      * \note not available in Python bindings
+     * \deprecated since QGIS 3.10.3, use the QgsVectorFileWriter::create function.
      */
     QgsVectorFileWriter( const QString &vectorFileName,
                          const QString &fileEncoding,
@@ -594,13 +598,37 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                          const QString &layerName,
                          QgsVectorFileWriter::ActionOnExistingFile action,
                          QString *newLayer = nullptr,
-                         QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
+                         QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext(),
+                         QgsFeatureSink::SinkFlags sinkFlags = nullptr
                        ) SIP_SKIP;
 
     //! QgsVectorFileWriter cannot be copied.
     QgsVectorFileWriter( const QgsVectorFileWriter &rh ) = delete;
     //! QgsVectorFileWriter cannot be copied.
     QgsVectorFileWriter &operator=( const QgsVectorFileWriter &rh ) = delete;
+
+    /**
+     * Create a new vector file writer.
+     * \param vectorFileName file name to write to
+     * \param fields fields to write
+     * \param geometryType geometry type of output file
+     * \param srs spatial reference system of output file
+     * \param options save options
+     * \param fieldValueConverter field value converter
+     * \param skinkFlags feature sink flags
+     * \param newFilename potentially modified file name (output parameter)
+     * \param newLayer potentially modified layer name (output parameter)
+     * \since QGIS 3.10.3
+     */
+    static QgsVectorFileWriter *create( const QString &vectorFileName,
+                                        const QgsFields &fields,
+                                        QgsWkbTypes::Type geometryType,
+                                        const QgsCoordinateReferenceSystem &srs,
+                                        const QgsVectorFileWriter::SaveVectorOptions &options,
+                                        FieldValueConverter *fieldValueConverter = nullptr,
+                                        QgsFeatureSink::SinkFlags sinkFlags = nullptr,
+                                        QString *newFilename = nullptr,
+                                        QString *newLayer = nullptr );
 
     /**
      * Details of available filters and formats.

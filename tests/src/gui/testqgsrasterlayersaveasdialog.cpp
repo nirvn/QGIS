@@ -116,11 +116,11 @@ QString TestQgsRasterLayerSaveAsDialog::prepareDb()
   tmpFile.open();
   QString fileName( tmpFile.fileName( ) );
   QgsVectorLayer vl( QStringLiteral( "Point?field=firstfield:string(1024)" ), "test_vector_layer", "memory" );
-  QgsVectorFileWriter w( fileName,
-                         QStringLiteral( "UTF-8" ),
-                         vl.fields(),
-                         QgsWkbTypes::Point,
-                         vl.crs() );
+
+  QgsVectorFileWriter::SaveVectorOptions saveOptions;
+  saveOptions.fileEncoding = QStringLiteral( "UTF-8" );
+  std::unique_ptr< QgsVectorFileWriter > writer( QgsVectorFileWriter::create( fileName, vl.fields(), QgsWkbTypes::Point, vl.crs(), saveOptions ) );
+
   QgsFeature f { vl.fields() };
   f.setAttribute( 0, QString( 1024, 'x' ) );
   f.setGeometry( QgsGeometry::fromWkt( QStringLiteral( "point(9 45)" ) ) );

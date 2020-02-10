@@ -132,7 +132,8 @@ QgsVectorFileWriter::QgsVectorFileWriter(
   const QString &layerName,
   ActionOnExistingFile action,
   QString *newLayer,
-  QgsCoordinateTransformContext transformContext
+  QgsCoordinateTransformContext transformContext,
+  QgsFeatureSink::SinkFlags sinkFlags
 )
   : mError( NoError )
   , mWkbType( geometryType )
@@ -141,7 +142,25 @@ QgsVectorFileWriter::QgsVectorFileWriter(
 {
   init( vectorFileName, fileEncoding, fields, geometryType, srs, driverName,
         datasourceOptions, layerOptions, newFilename, fieldValueConverter,
-        layerName, action, newLayer, nullptr, transformContext );
+        layerName, action, newLayer, sinkFlags, transformContext );
+}
+
+QgsVectorFileWriter *QgsVectorFileWriter::create(
+  const QString &vectorFileName,
+  const QgsFields &fields,
+  QgsWkbTypes::Type geometryType,
+  const QgsCoordinateReferenceSystem &srs,
+  const QgsVectorFileWriter::SaveVectorOptions &options,
+  FieldValueConverter *fieldValueConverter,
+  QgsFeatureSink::SinkFlags sinkFlags,
+  QString *newFilename,
+  QString *newLayer
+)
+{
+  return new QgsVectorFileWriter( vectorFileName, options.fileEncoding, fields, geometryType, srs,
+                                  options.driverName, options.datasourceOptions, options.layerOptions,
+                                  newFilename, options.symbologyExport, fieldValueConverter, options.layerName,
+                                  options.actionOnExistingFile, newLayer, options.ct.context(), sinkFlags );
 }
 
 bool QgsVectorFileWriter::supportsFeatureStyles( const QString &driverName )
