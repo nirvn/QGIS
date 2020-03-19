@@ -54,6 +54,7 @@ class TestQgsFontMarkerSymbol : public QObject
     void cleanup() {} // will be called after every testfunction.
 
     void fontMarkerSymbol();
+    void fontMarkerSymbolStyle();
     void fontMarkerSymbolStroke();
     void bounds();
 
@@ -132,6 +133,20 @@ void TestQgsFontMarkerSymbol::fontMarkerSymbol()
   mFontMarkerLayer->setCharacter( QChar( 'A' ) );
   mFontMarkerLayer->setSize( 12 );
   QVERIFY( imageCheck( "fontmarker" ) );
+}
+
+void TestQgsFontMarkerSymbol::fontMarkerSymbolStyle()
+{
+  mReport += QLatin1String( "<h2>Font marker symbol style layer test</h2>\n" );
+
+  mFontMarkerLayer->setColor( Qt::blue );
+  QFont font = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
+  mFontMarkerLayer->setFontFamily( font.family() );
+  // It actually doesn't change the rendering as the QGIS test fonts don't have styles, but test still insures rendering occurs without a problem
+  mFontMarkerLayer->setFontStyle( QStringLiteral( "Italic" ) );
+  mFontMarkerLayer->setCharacter( QChar( 'A' ) );
+  mFontMarkerLayer->setSize( 12 );
+  QVERIFY( imageCheck( "fontmarker_style" ) );
 }
 
 void TestQgsFontMarkerSymbol::fontMarkerSymbolStroke()
