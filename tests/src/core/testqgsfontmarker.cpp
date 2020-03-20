@@ -79,6 +79,7 @@ void TestQgsFontMarkerSymbol::initTestCase()
   QgsApplication::init();
   QgsApplication::initQgis();
   QgsApplication::showSettings();
+  QgsFontUtils::loadStandardTestFonts( QStringList() << QStringLiteral( "Bold" ) << QStringLiteral( "Roman" ) << QStringLiteral( "Oblique" ) );
 
   //create some objects that will be used in all tests...
   QString myDataDir( TEST_DATA_DIR ); //defined in CmakeLists.txt
@@ -130,6 +131,7 @@ void TestQgsFontMarkerSymbol::fontMarkerSymbol()
   mFontMarkerLayer->setColor( Qt::blue );
   QFont font = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setFontFamily( font.family() );
+  mFontMarkerLayer->setFontStyle( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setCharacter( QChar( 'A' ) );
   mFontMarkerLayer->setSize( 12 );
   QVERIFY( imageCheck( "fontmarker" ) );
@@ -142,8 +144,7 @@ void TestQgsFontMarkerSymbol::fontMarkerSymbolStyle()
   mFontMarkerLayer->setColor( Qt::blue );
   QFont font = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setFontFamily( font.family() );
-  // It actually doesn't change the rendering as the QGIS test fonts don't have styles, but test still insures rendering occurs without a problem
-  mFontMarkerLayer->setFontStyle( QStringLiteral( "Italic" ) );
+  mFontMarkerLayer->setFontStyle( QStringLiteral( "Oblique" ) );
   mFontMarkerLayer->setCharacter( QChar( 'A' ) );
   mFontMarkerLayer->setSize( 12 );
   QVERIFY( imageCheck( "fontmarker_style" ) );
@@ -154,6 +155,7 @@ void TestQgsFontMarkerSymbol::fontMarkerSymbolStroke()
   mFontMarkerLayer->setColor( Qt::blue );
   QFont font = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setFontFamily( font.family() );
+  mFontMarkerLayer->setFontStyle( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setCharacter( QChar( 'A' ) );
   mFontMarkerLayer->setSize( 30 );
   mFontMarkerLayer->setStrokeWidth( 3.5 );
@@ -165,6 +167,7 @@ void TestQgsFontMarkerSymbol::bounds()
   mFontMarkerLayer->setColor( Qt::blue );
   QFont font = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
   mFontMarkerLayer->setFontFamily( font.family() );
+  mFontMarkerLayer->setFontStyle( QStringLiteral( "Bold" ) );
   //use a narrow character to test that width is correctly calculated
   mFontMarkerLayer->setCharacter( QChar( 'l' ) );
   mFontMarkerLayer->setSize( 12 );
