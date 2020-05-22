@@ -17,11 +17,15 @@
 
 #include "qgstemporalcontrollerwidget.h"
 #include "qgsgui.h"
+#include "qgsmaplayermodel.h"
 #include "qgsproject.h"
 #include "qgsprojecttimesettings.h"
 #include "qgstemporalmapsettingswidget.h"
 #include "qgstemporalutils.h"
 #include "qgsmaplayertemporalproperties.h"
+
+#include <QAction>
+#include <QMenu>
 
 QgsTemporalControllerWidget::QgsTemporalControllerWidget( QWidget *parent )
   : QgsPanelWidget( parent )
@@ -65,8 +69,29 @@ QgsTemporalControllerWidget::QgsTemporalControllerWidget( QWidget *parent )
   connect( mNavigationObject, &QgsTemporalNavigationObject::updateTemporalRange, this, &QgsTemporalControllerWidget::updateSlider );
 
   connect( mSettings, &QPushButton::clicked, this, &QgsTemporalControllerWidget::settings_clicked );
-  connect( mSetToProjectTimeButton, &QPushButton::clicked, this, &QgsTemporalControllerWidget::mSetToProjectTimeButton_clicked );
-  connect( mFixedRangeSetToProjectTimeButton, &QPushButton::clicked, this, &QgsTemporalControllerWidget::mSetToProjectTimeButton_clicked );
+
+  mRangeMenu.reset( new QMenu( this ) );
+
+  mRangeSetToAllLayersAction = new QAction( tr( "Set to layers' cummulative date time range" ), mRangeMenu.get() );
+  connect( mRangeSetToAllLayersAction, &QAction::triggered, this, &QgsTemporalControllerWidget::mRangeSetToAllLayersAction_triggered );
+  mRangeMenu->addAction( mRangeSetToAllLayersAction );
+  mRangeSetToProjectAction = new QAction( tr( "Set to project's date time range" ), mRangeMenu.get() );
+  connect( mRangeSetToProjectAction, &QAction::triggered, this, &QgsTemporalControllerWidget::mRangeSetToProjectAction_triggered );
+  mRangeMenu->addAction( mRangeSetToProjectAction );
+
+  mRangeMenu->addSeparator();
+
+  mRangeLayersSubMenu.reset( new QMenu( tr( "Set to single layer's date time range" ), mRangeMenu.get() ) );
+  mRangeLayersSubMenu->setEnabled( false );
+  mRangeMenu->addMenu( mRangeLayersSubMenu.get() );
+  connect( mRangeMenu.get(), &QMenu::aboutToShow, this, &QgsTemporalControllerWidget::aboutToShowRangeMenu );
+
+  mMapLayerModel = new QgsMapLayerModel( this );
+
+  mSetToProjectTimeButton->setPopupMode( QToolButton::InstantPopup );
+  mSetToProjectTimeButton->setMenu( mRangeMenu.get() );
+  mFixedRangeSetToProjectTimeButton->setPopupMode( QToolButton::InstantPopup );
+  mFixedRangeSetToProjectTimeButton->setMenu( mRangeMenu.get() );
 
   connect( mExportAnimationButton, &QPushButton::clicked, this, &QgsTemporalControllerWidget::exportAnimation );
 
@@ -143,6 +168,33 @@ void QgsTemporalControllerWidget::keyPressEvent( QKeyEvent *e )
     togglePause();
   }
   QWidget::keyPressEvent( e );
+}
+
+void QgsTemporalControllerWidget::aboutToShowRangeMenu()
+{
+  mRangeLayersSubMenu->clear();
+
+  for ( int i = 0; i < mMapLayerModel->rowCount(); ++i )
+  {
+    QModelIndex index = mMapLayerModel->index( i, 0 );
+    QgsMapLayer *currentLayer = mMapLayerModel->data( index, QgsMapLayerModel::LayerRole ).value<QgsMapLayer *>();
+    if ( !currentLayer->temporalProperties() || !currentLayer->temporalProperties()->isActive() )
+      continue;
+
+    QIcon icon = qvariant_cast<QIcon>( mMapLayerModel->data( index, Qt::DecorationRole ) );
+    QString text = mMapLayerModel->data( index, Qt::DisplayRole ).toString();
+    QgsDateTimeRange range = currentLayer->temporalProperties()->calculateTemporalExtent( currentLayer );
+
+    QAction *action = new QAction( icon, text, mRangeLayersSubMenu.get() );
+    connect( action, &QAction::triggered, this, [ = ]
+    {
+      setDates( range );
+      saveRange();
+    } );
+    mRangeLayersSubMenu->addAction( action );
+  }
+
+  mRangeLayersSubMenu->setEnabled( !mRangeLayersSubMenu->actions().isEmpty() );
 }
 
 void QgsTemporalControllerWidget::togglePlayForward()
@@ -426,11 +478,7 @@ void QgsTemporalControllerWidget::startEndDateTime_changed()
   whileBlocking( mFixedRangeEndDateTime )->setDateTime( mEndDateTime->dateTime() );
 
   updateTemporalExtent();
-
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/StartDateTime" ), mStartDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/EndDateTime" ), mEndDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
+  saveRange();
 }
 
 void QgsTemporalControllerWidget::fixedRangeStartEndDateTime_changed()
@@ -439,21 +487,40 @@ void QgsTemporalControllerWidget::fixedRangeStartEndDateTime_changed()
   whileBlocking( mEndDateTime )->setDateTime( mFixedRangeEndDateTime->dateTime() );
 
   updateTemporalExtent();
-
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/StartDateTime" ), mStartDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/EndDateTime" ), mEndDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
+  saveRange();
 }
 
-void QgsTemporalControllerWidget::mSetToProjectTimeButton_clicked()
+void QgsTemporalControllerWidget::mRangeSetToAllLayersAction_triggered()
+{
+  setDatesToAllLayers();
+  saveRange();
+}
+
+void QgsTemporalControllerWidget::mRangeSetToProjectAction_triggered()
 {
   setDatesToProjectTime();
+  saveRange();
+}
 
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/StartDateTime" ), mStartDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
-  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
-                                      QStringLiteral( "/EndDateTime" ), mEndDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
+void QgsTemporalControllerWidget::setDates( const QgsDateTimeRange &range )
+{
+  if ( range.begin().isValid() && range.end().isValid() )
+  {
+    whileBlocking( mStartDateTime )->setDateTime( range.begin() );
+    whileBlocking( mEndDateTime )->setDateTime( range.end() );
+    whileBlocking( mFixedRangeStartDateTime )->setDateTime( range.begin() );
+    whileBlocking( mFixedRangeEndDateTime )->setDateTime( range.end() );
+    updateTemporalExtent();
+  }
+}
+
+void QgsTemporalControllerWidget::setDatesToAllLayers()
+{
+  QgsDateTimeRange range;
+
+  range = QgsTemporalUtils::calculateTemporalRangeForProject( QgsProject::instance() );
+
+  setDates( range );
 }
 
 void QgsTemporalControllerWidget::setDatesToProjectTime()
@@ -470,14 +537,7 @@ void QgsTemporalControllerWidget::setDatesToProjectTime()
     range = QgsTemporalUtils::calculateTemporalRangeForProject( QgsProject::instance() );
   }
 
-  if ( range.begin().isValid() && range.end().isValid() )
-  {
-    whileBlocking( mStartDateTime )->setDateTime( range.begin() );
-    whileBlocking( mEndDateTime )->setDateTime( range.end() );
-    whileBlocking( mFixedRangeStartDateTime )->setDateTime( range.begin() );
-    whileBlocking( mFixedRangeEndDateTime )->setDateTime( range.end() );
-    updateTemporalExtent();
-  }
+  setDates( range );
 }
 
 void QgsTemporalControllerWidget::setDateInputsEnable( bool enabled )
@@ -492,4 +552,12 @@ void QgsTemporalControllerWidget::updateButtonsEnable( bool enabled )
   mNextButton->setEnabled( enabled );
   mBackButton->setEnabled( enabled );
   mForwardButton->setEnabled( enabled );
+}
+
+void QgsTemporalControllerWidget::saveRange()
+{
+  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
+                                      QStringLiteral( "/StartDateTime" ), mStartDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
+  QgsProject::instance()->writeEntry( QStringLiteral( "TemporalControllerWidget" ),
+                                      QStringLiteral( "/EndDateTime" ), mEndDateTime->dateTime().toTimeSpec( Qt::OffsetFromUTC ).toString( Qt::ISODate ) );
 }

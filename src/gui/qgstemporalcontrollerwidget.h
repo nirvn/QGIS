@@ -25,6 +25,7 @@
 #include "qgstemporalnavigationobject.h"
 
 class QgsMapLayer;
+class QgsMapLayerModel;
 class QgsTemporalNavigationObject;
 class QgsTemporalController;
 class QgsInterval;
@@ -91,6 +92,18 @@ class GUI_EXPORT QgsTemporalControllerWidget : public QgsPanelWidget, private Ui
     void togglePause();
     bool mPlayingForward = true;
 
+    void aboutToShowRangeMenu();
+
+    void mRangeSetToProjectAction_triggered();
+    void mRangeSetToAllLayersAction_triggered();
+
+    std::unique_ptr< QMenu > mRangeMenu;
+    QAction *mRangeSetToProjectAction = nullptr;
+    QAction *mRangeSetToAllLayersAction = nullptr;
+
+    std::unique_ptr< QMenu > mRangeLayersSubMenu;
+    QgsMapLayerModel *mMapLayerModel = nullptr;
+
   private slots:
 
     /**
@@ -103,6 +116,16 @@ class GUI_EXPORT QgsTemporalControllerWidget : public QgsPanelWidget, private Ui
      * Loads a temporal map settings dialog.
      **/
     void settings_clicked();
+
+    /**
+     * Set date widgets to match the given \a range.
+     */
+    void setDates( const QgsDateTimeRange &range );
+
+    /**
+     * Updates the controller dates time inputs using the cummulative range of all layers.
+     */
+    void setDatesToAllLayers();
 
     /**
      * Updates the controller dates time inputs.
@@ -141,7 +164,8 @@ class GUI_EXPORT QgsTemporalControllerWidget : public QgsPanelWidget, private Ui
 
     void startEndDateTime_changed();
     void fixedRangeStartEndDateTime_changed();
-    void mSetToProjectTimeButton_clicked();
+
+    void saveRange();
 };
 
 #endif // QGSTEMPORALCONTROLLERWIDGET_H
