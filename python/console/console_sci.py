@@ -145,6 +145,9 @@ class ShellScintilla(QgsPythonConsoleBase, code.InteractiveInterpreter):
         self.setMatchedBraceBackgroundColor(self.color(QgsCodeEditor.ColorRole.MatchedBraceBackground))
         self.setMatchedBraceForegroundColor(self.color(QgsCodeEditor.ColorRole.MatchedBraceForeground))
         self.setMarginsBackgroundColor(self.color(QgsCodeEditor.ColorRole.Background))
+        self.setFoldMarginColors(self.color(QgsCodeEditor.ColorRole.Background), self.color(QgsCodeEditor.ColorRole.Background))
+
+        self.setEdgeMode(QsciScintilla.EdgeNone)
 
         # Sets minimum height for input area based of font metric
         self._setMinimumHeight()

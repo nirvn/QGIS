@@ -164,6 +164,8 @@ class ShellOutputScintilla(QgsPythonConsoleBase):
         self.setCaretLineBackgroundColor(self.color(QgsCodeEditor.ColorRole.CaretLine))
         self.setCaretForegroundColor(self.color(QgsCodeEditor.ColorRole.Cursor))
 
+        self.setEdgeMode(QsciScintilla.EdgeNone)
+
     def clearConsole(self):
         self.setText('')
         self.insertInitText()

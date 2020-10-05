@@ -167,6 +167,9 @@ class Editor(QgsPythonConsoleBase):
         self.modificationAttempted.connect(self.fileReadOnly)
 
     def settingsEditor(self):
+        # Set Python lexer
+        self.setLexers()
+
         self.setSelectionForegroundColor(self.color(QgsCodeEditor.ColorRole.SelectionForeground))
         self.setSelectionBackgroundColor(self.color(QgsCodeEditor.ColorRole.SelectionBackground))
         self.setMatchedBraceBackgroundColor(self.color(QgsCodeEditor.ColorRole.MatchedBraceBackground))
@@ -179,8 +182,6 @@ class Editor(QgsPythonConsoleBase):
         foldColor = self.color(QgsCodeEditor.ColorRole.Fold)
         self.setFoldMarginColors(foldColor, foldColor)
 
-        # Set Python lexer
-        self.setLexers()
         threshold = self.settings.value("pythonConsole/autoCompThreshold", 2, type=int)
         radioButtonSource = self.settings.value("pythonConsole/autoCompleteSource", 'fromAPI')
         autoCompEnabled = self.settings.value("pythonConsole/autoCompleteEnabled", True, type=bool)
