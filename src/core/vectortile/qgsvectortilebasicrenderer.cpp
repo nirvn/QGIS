@@ -27,6 +27,8 @@
 #include "qgslinesymbol.h"
 #include "qgsmarkersymbol.h"
 
+#include <QScopeGuard>
+
 QgsVectorTileBasicRendererStyle::QgsVectorTileBasicRendererStyle( const QString &stName, const QString &laName, QgsWkbTypes::GeometryType geomType )
   : mStyleName( stName )
   , mLayerName( laName )
@@ -182,6 +184,7 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
 
     QgsSymbol *sym = layerStyle.symbol();
     sym->startRender( context, QgsFields() );
+    auto cleanupSymbol = qScopeGuard( [sym, &context] { sym->stopRender( context ); } );
     if ( layerStyle.layerName() == QLatin1String( "background" ) )
     {
       QgsFillSymbol *fillSym = dynamic_cast<QgsFillSymbol *>( sym );
@@ -257,7 +260,6 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
         }
       }
     }
-    sym->stopRender( context );
   }
 }
 
