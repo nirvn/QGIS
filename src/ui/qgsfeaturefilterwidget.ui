@@ -201,6 +201,15 @@
     <string>Show Features Visible On Map</string>
    </property>
   </action>
+  <action name="mActionInvalidFilter">
+   <property name="icon">
+    <iconset resource="../../images/images.qrc">
+     <normaloff>:/images/themes/default/mActionOpenTableInvalid.svg</normaloff>:/images/themes/default/mActionOpenTableInvalid.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show Features Not Respecting Constraints</string>
+   </property>
+  </action>
   <action name="mActionEditedFilter">
    <property name="icon">
     <iconset resource="../../images/images.qrc">

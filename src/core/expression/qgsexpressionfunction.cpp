@@ -1893,9 +1893,8 @@ static QVariant fcnMapToHtmlDefinitionList( const QVariantList &values, const Qg
 
 static QVariant fcnValidateFeature( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
-  QgsVectorLayer *layer = nullptr;
-
   Q_NOWARN_DEPRECATED_PUSH
+  QgsVectorLayer *layer = nullptr;
   if ( values.size() < 1 || QgsVariantUtils::isNull( values.at( 0 ) ) )
   {
     layer = QgsExpressionUtils::getVectorLayer( context->variable( QStringLiteral( "layer" ) ), context, parent );
@@ -1941,6 +1940,57 @@ static QVariant fcnValidateFeature( const QVariantList &values, const QgsExpress
   }
 
   return true;
+}
+
+static QVariant fcnValidateAttribute( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
+{
+  const QString attributeName = QgsExpressionUtils::getStringValue( values.at( 0 ), parent );
+
+  Q_NOWARN_DEPRECATED_PUSH
+  QgsVectorLayer *layer = nullptr;
+  if ( values.size() < 2 || QgsVariantUtils::isNull( values.at( 1 ) ) )
+  {
+    layer = QgsExpressionUtils::getVectorLayer( context->variable( QStringLiteral( "layer" ) ), context, parent );
+  }
+  else
+  {
+    //first node is layer id or name
+    QgsExpressionNode *node = QgsExpressionUtils::getNode( values.at( 1 ), parent );
+    ENSURE_NO_EVAL_ERROR
+    QVariant value = node->eval( parent, context );
+    ENSURE_NO_EVAL_ERROR
+
+    // TODO this expression function is NOT thread safe
+    layer = QgsExpressionUtils::getVectorLayer( value, context, parent );
+  }
+  Q_NOWARN_DEPRECATED_POP
+
+  if ( !layer )
+  {
+    parent->setEvalErrorString( QObject::tr( "No layer provided to conduct constraints checks" ) );
+    return QVariant();
+  }
+
+  QgsFeature feature;
+  if ( values.size() < 3 || QgsVariantUtils::isNull( values.at( 2 ) ) )
+  {
+    feature = context->feature();
+  }
+  else
+  {
+    feature = QgsExpressionUtils::getFeature( values.at( 2 ), parent );
+  }
+
+  const int fieldIndex = layer->fields().indexFromName( attributeName );
+  if ( fieldIndex == -1 )
+  {
+    parent->setEvalErrorString( QObject::tr( "The attribute name did not match any field for the given feature" ) );
+    return QVariant();
+  }
+
+  QStringList errors;
+  bool valid = QgsVectorLayerUtils::validateAttribute( layer, feature, fieldIndex, errors );
+  return valid;
 }
 
 static QVariant fcnAttributes( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
@@ -8665,6 +8715,14 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
         fcnValidateFeature, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
     validateFeature->setIsStatic( false );
     functions << validateFeature;
+
+    QgsStaticExpressionFunction *validateAttribute = new QgsStaticExpressionFunction( QStringLiteral( "is_attribute_valid" ),
+        QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "attribute" ), false )
+        << QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "layer" ), true )
+        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true ),
+        fcnValidateAttribute, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
+    validateAttribute->setIsStatic( false );
+    functions << validateAttribute;
 
     QgsStaticExpressionFunction *maptipFunc = new QgsStaticExpressionFunction(
       QStringLiteral( "maptip" ),
