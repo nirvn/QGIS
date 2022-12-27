@@ -48,6 +48,7 @@
 #include "qgsmessagelog.h"
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
+#include "qgsvectorlayerutils.h"
 #include "qgsrasterbandstats.h"
 #include "qgscolorramp.h"
 #include "qgsfieldformatterregistry.h"
@@ -1890,6 +1891,57 @@ static QVariant fcnMapToHtmlDefinitionList( const QVariantList &values, const Qg
   return table.arg( rows );
 }
 
+static QVariant fcnValidateFeature( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
+{
+  QgsVectorLayer *layer = nullptr;
+
+  Q_NOWARN_DEPRECATED_PUSH
+  if ( values.size() < 1 || QgsVariantUtils::isNull( values.at( 0 ) ) )
+  {
+    layer = QgsExpressionUtils::getVectorLayer( context->variable( QStringLiteral( "layer" ) ), context, parent );
+  }
+  else
+  {
+    //first node is layer id or name
+    QgsExpressionNode *node = QgsExpressionUtils::getNode( values.at( 0 ), parent );
+    ENSURE_NO_EVAL_ERROR
+    QVariant value = node->eval( parent, context );
+    ENSURE_NO_EVAL_ERROR
+
+    // TODO this expression function is NOT thread safe
+    layer = QgsExpressionUtils::getVectorLayer( value, context, parent );
+  }
+  Q_NOWARN_DEPRECATED_POP
+
+  if ( !layer )
+  {
+    parent->setEvalErrorString( QObject::tr( "No layer provided to conduct constraints checks" ) );
+    return QVariant();
+  }
+
+  QgsFeature feature;
+  if ( values.size() < 2 || QgsVariantUtils::isNull( values.at( 1 ) ) )
+  {
+    feature = context->feature();
+  }
+  else
+  {
+    feature = QgsExpressionUtils::getFeature( values.at( 1 ), parent );
+  }
+
+  const QgsFields fields = layer->fields();
+  for ( int i = 0; i < fields.size(); i++ )
+  {
+    QStringList errors;
+    bool valid = QgsVectorLayerUtils::validateAttribute( layer, feature, i, errors );
+    if ( !valid )
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 static QVariant fcnAttributes( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
@@ -8606,6 +8658,13 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
         fcnRepresentAttributes, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
     representAttributesFunc->setIsStatic( false );
     functions << representAttributesFunc;
+
+    QgsStaticExpressionFunction *validateFeature = new QgsStaticExpressionFunction( QStringLiteral( "is_feature_valid" ),
+        QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "layer" ), true )
+        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true ),
+        fcnValidateFeature, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
+    validateFeature->setIsStatic( false );
+    functions << validateFeature;
 
     QgsStaticExpressionFunction *maptipFunc = new QgsStaticExpressionFunction(
       QStringLiteral( "maptip" ),
