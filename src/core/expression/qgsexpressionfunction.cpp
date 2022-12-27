@@ -1928,18 +1928,30 @@ static QVariant fcnValidateFeature( const QVariantList &values, const QgsExpress
     feature = QgsExpressionUtils::getFeature( values.at( 1 ), parent );
   }
 
+  QgsFieldConstraints::ConstraintStrength constraintStrength = QgsFieldConstraints::ConstraintStrengthNotSet;
+  const QString strength = QgsExpressionUtils::getStringValue( values.at( 2 ), parent ).toLower();
+  if ( strength == QStringLiteral( "hard" ) )
+  {
+    constraintStrength = QgsFieldConstraints::ConstraintStrengthHard;
+  }
+  else if ( strength == QStringLiteral( "soft" ) )
+  {
+    constraintStrength = QgsFieldConstraints::ConstraintStrengthSoft;
+  }
+
   const QgsFields fields = layer->fields();
+  bool valid = true;
   for ( int i = 0; i < fields.size(); i++ )
   {
     QStringList errors;
-    bool valid = QgsVectorLayerUtils::validateAttribute( layer, feature, i, errors );
+    valid = QgsVectorLayerUtils::validateAttribute( layer, feature, i, errors, constraintStrength );
     if ( !valid )
     {
-      return false;
+      break;
     }
   }
 
-  return true;
+  return valid;
 }
 
 static QVariant fcnValidateAttribute( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
@@ -1981,6 +1993,17 @@ static QVariant fcnValidateAttribute( const QVariantList &values, const QgsExpre
     feature = QgsExpressionUtils::getFeature( values.at( 2 ), parent );
   }
 
+  QgsFieldConstraints::ConstraintStrength constraintStrength = QgsFieldConstraints::ConstraintStrengthNotSet;
+  const QString strength = QgsExpressionUtils::getStringValue( values.at( 3 ), parent ).toLower();
+  if ( strength == QStringLiteral( "hard" ) )
+  {
+    constraintStrength = QgsFieldConstraints::ConstraintStrengthHard;
+  }
+  else if ( strength == QStringLiteral( "soft" ) )
+  {
+    constraintStrength = QgsFieldConstraints::ConstraintStrengthSoft;
+  }
+
   const int fieldIndex = layer->fields().indexFromName( attributeName );
   if ( fieldIndex == -1 )
   {
@@ -1989,7 +2012,7 @@ static QVariant fcnValidateAttribute( const QVariantList &values, const QgsExpre
   }
 
   QStringList errors;
-  bool valid = QgsVectorLayerUtils::validateAttribute( layer, feature, fieldIndex, errors );
+  bool valid = QgsVectorLayerUtils::validateAttribute( layer, feature, fieldIndex, errors, constraintStrength );
   return valid;
 }
 
@@ -8711,7 +8734,8 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
 
     QgsStaticExpressionFunction *validateFeature = new QgsStaticExpressionFunction( QStringLiteral( "is_feature_valid" ),
         QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "layer" ), true )
-        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true ),
+        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true )
+        << QgsExpressionFunction::Parameter( QStringLiteral( "strength" ), true ),
         fcnValidateFeature, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
     validateFeature->setIsStatic( false );
     functions << validateFeature;
@@ -8719,7 +8743,8 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
     QgsStaticExpressionFunction *validateAttribute = new QgsStaticExpressionFunction( QStringLiteral( "is_attribute_valid" ),
         QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "attribute" ), false )
         << QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "layer" ), true )
-        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true ),
+        << QgsExpressionFunction::Parameter( QStringLiteral( "feature" ), true )
+        << QgsExpressionFunction::Parameter( QStringLiteral( "strength" ), true ),
         fcnValidateAttribute, QStringLiteral( "Record and Attributes" ), QString(), false, QSet<QString>() << QgsFeatureRequest::ALL_ATTRIBUTES );
     validateAttribute->setIsStatic( false );
     functions << validateAttribute;
