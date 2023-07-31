@@ -353,6 +353,8 @@ class CORE_EXPORT QgsSymbolLayer
      */
     virtual void startRender( QgsSymbolRenderContext &context ) = 0;
 
+    virtual void prepareFirstRender( QgsSymbolRenderContext &context );
+
     /**
      * Called after a set of rendering operations has finished on the supplied render \a context.
      *

@@ -822,6 +822,12 @@ class CORE_EXPORT QgsSymbol
      */
     bool mStarted = false;
 
+    /**
+     * TRUE if render has gone through preparation prior to its first rendering
+     * \since QGIS 3.34
+     */
+    bool mPreparedFirstRender = false;
+
     //! Initialized in startRender, destroyed in stopRender
     std::unique_ptr< QgsSymbolRenderContext > mSymbolRenderContext;
 

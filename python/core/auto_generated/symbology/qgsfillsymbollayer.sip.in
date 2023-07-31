@@ -1549,6 +1549,8 @@ ownership of the returned object.
 
     virtual void stopRender( QgsSymbolRenderContext &context );
 
+    virtual void prepareFirstRender( QgsSymbolRenderContext &context );
+
     virtual void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context );
 
     virtual QVariantMap properties() const;

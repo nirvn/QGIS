@@ -123,6 +123,11 @@ void QgsSymbolLayer::setDataDefinedProperty( QgsSymbolLayer::Property key, const
   dataDefinedProperties().setProperty( key, property );
 }
 
+void QgsSymbolLayer::prepareFirstRender( QgsSymbolRenderContext & )
+{
+  return;
+}
+
 void QgsSymbolLayer::startFeatureRender( const QgsFeature &feature, QgsRenderContext &context )
 {
   installMasks( context, false );
@@ -534,6 +539,7 @@ void QgsMarkerSymbolLayer::stopRender( QgsSymbolRenderContext &context )
 void QgsMarkerSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
 {
   startRender( context );
+  prepareFirstRender( context );
   QgsPaintEffect *effect = paintEffect();
 
   QPolygonF points = context.patchShape() ? context.patchShape()->toQPolygonF( Qgis::SymbolType::Marker, size ).value( 0 ).value( 0 )
@@ -741,6 +747,7 @@ void QgsLineSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize
   const QList< QList< QPolygonF > > points = context.patchShape() ? context.patchShape()->toQPolygonF( Qgis::SymbolType::Line, size )
       : QgsStyle::defaultStyle()->defaultPatchAsQPolygonF( Qgis::SymbolType::Line, size );
   startRender( context );
+  prepareFirstRender( context );
   QgsPaintEffect *effect = paintEffect();
 
   std::unique_ptr< QgsEffectPainter > effectPainter;
@@ -821,6 +828,7 @@ void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize
       : QgsStyle::defaultStyle()->defaultPatchAsQPolygonF( Qgis::SymbolType::Fill, size );
 
   startRender( context );
+  prepareFirstRender( context );
   QgsPaintEffect *effect = paintEffect();
 
   std::unique_ptr< QgsEffectPainter > effectPainter;

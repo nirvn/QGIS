@@ -829,6 +829,7 @@ void QgsSymbol::startRender( QgsRenderContext &context, const QgsFields &fields 
 {
   Q_ASSERT_X( !mStarted, "startRender", "Rendering has already been started for this symbol instance!" );
   mStarted = true;
+  mPreparedFirstRender = false;
 
   mSymbolRenderContext.reset( new QgsSymbolRenderContext( context, Qgis::RenderUnit::Unknown, mOpacity, false, mRenderHints, nullptr, fields ) );
 
@@ -1377,6 +1378,24 @@ void QgsSymbol::renderFeature( const QgsFeature &feature, QgsRenderContext &cont
   QPolygonF markers;
 
   QgsGeometry renderedBoundsGeom;
+
+  // Step 0 - prepare first rendering if needed.
+  if ( !mPreparedFirstRender )
+  {
+    mPreparedFirstRender = true;
+    // Why do we need a copy here ? Is it to make sure the symbol layer rendering does not mess with the symbol render context ?
+    // Or is there another profound reason ?
+    QgsSymbolRenderContext symbolContext( context, Qgis::RenderUnit::Unknown, mOpacity, false, mRenderHints, nullptr, mSymbolRenderContext->fields() );
+
+    const auto constMLayers = mLayers;
+    for ( QgsSymbolLayer *layer : constMLayers )
+    {
+      if ( !layer->enabled() || !context.isSymbolLayerEnabled( layer ) )
+        continue;
+
+      layer->prepareFirstRender( symbolContext );
+    }
+  }
 
   // Step 1 - collect the set of painter coordinate geometries to render.
   // We do this upfront, because we only want to ever do this once, regardless how many symbol layers we need to render.

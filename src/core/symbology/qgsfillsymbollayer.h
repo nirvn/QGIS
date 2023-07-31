@@ -1422,6 +1422,7 @@ class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
     QString layerType() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
+    void prepareFirstRender( QgsSymbolRenderContext &context ) override;
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     QVariantMap properties() const override;
     QgsLinePatternFillSymbolLayer *clone() const override SIP_FACTORY;
@@ -1662,7 +1663,7 @@ class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
 #endif
 
     //! Applies the svg pattern to the brush
-    void applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance );
+    bool applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance );
 
     //! Fill line
     std::unique_ptr< QgsLineSymbol > mFillLineSymbol;

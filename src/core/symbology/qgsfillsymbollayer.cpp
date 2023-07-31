@@ -2844,19 +2844,19 @@ QString QgsLinePatternFillSymbolLayer::layerType() const
   return QStringLiteral( "LinePatternFill" );
 }
 
-void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance )
+bool QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance )
 {
   mBrush.setTextureImage( QImage() ); // set empty in case we have to return
 
   if ( !mFillLineSymbol )
   {
-    return;
+    return true;
   }
   // We have to make a copy because marker intervals will have to be adjusted
   std::unique_ptr< QgsLineSymbol > fillLineSymbol( mFillLineSymbol->clone() );
   if ( !fillLineSymbol )
   {
-    return;
+    return true;
   }
 
   const QgsRenderContext &ctx = context.renderContext();
@@ -2974,10 +2974,11 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolRenderContext &
   width += 2 * xBuffer;
   height += 2 * yBuffer;
 
-  //protect from zero width/height image and symbol layer from eating too much memory
-  if ( width > 10000 || height > 10000 || width == 0 || height == 0 )
+  // protect from zero width/height image and symbol layer from eating too much memory
+  if ( width > 2000 || height > 2000 || width == 0 || height == 0 )
   {
-    return;
+    // use vector rendering to avoid costly QImage pattern creation
+    return false;
   }
 
   QImage patternImage( width, height, QImage::Format_ARGB32 );
@@ -3132,27 +3133,12 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolRenderContext &
 
   QTransform brushTransform;
   brush.setTransform( brushTransform );
+
+  return true;
 }
 
-void QgsLinePatternFillSymbolLayer::startRender( QgsSymbolRenderContext &context )
+void QgsLinePatternFillSymbolLayer::startRender( QgsSymbolRenderContext & )
 {
-  // if we are using a vector based output, we need to render points as vectors
-  // (OR if the line has data defined symbology, in which case we need to evaluate this line-by-line)
-  mRenderUsingLines = context.renderContext().forceVectorOutput()
-                      || mFillLineSymbol->hasDataDefinedProperties()
-                      || mClipMode != Qgis::LineClipMode::ClipPainterOnly
-                      || mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyLineClipping );
-
-  if ( mRenderUsingLines )
-  {
-    if ( mFillLineSymbol )
-      mFillLineSymbol->startRender( context.renderContext(), context.fields() );
-  }
-  else
-  {
-    // optimised render for screen only, use image based brush
-    applyPattern( context, mBrush, mLineAngle, mDistance );
-  }
 }
 
 void QgsLinePatternFillSymbolLayer::stopRender( QgsSymbolRenderContext &context )
@@ -3161,6 +3147,25 @@ void QgsLinePatternFillSymbolLayer::stopRender( QgsSymbolRenderContext &context 
   {
     mFillLineSymbol->stopRender( context.renderContext() );
   }
+}
+
+void QgsLinePatternFillSymbolLayer::prepareFirstRender( QgsSymbolRenderContext &context )
+{
+// if we are using a vector based output, we need to render points as vectors
+// (OR if the line has data defined symbology, in which case we need to evaluate this line-by-line)
+  mRenderUsingLines = context.renderContext().forceVectorOutput()
+                      || mFillLineSymbol->hasDataDefinedProperties()
+                      || mClipMode != Qgis::LineClipMode::ClipPainterOnly
+                      || mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyLineClipping );
+
+  if ( !mRenderUsingLines )
+  {
+    // optimised render for screen only, use image based brush
+    mRenderUsingLines = !applyPattern( context, mBrush, mLineAngle, mDistance );
+  }
+
+  if ( mRenderUsingLines && mFillLineSymbol )
+    mFillLineSymbol->startRender( context.renderContext(), context.fields() );
 }
 
 void QgsLinePatternFillSymbolLayer::renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context )

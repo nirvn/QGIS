@@ -322,6 +322,8 @@ pre-evaluating paths or images to render, and performing other one-time optimisa
 .. seealso:: :py:func:`stopRender`
 %End
 
+    virtual void prepareFirstRender( QgsSymbolRenderContext &context );
+
     virtual void stopRender( QgsSymbolRenderContext &context ) = 0;
 %Docstring
 Called after a set of rendering operations has finished on the supplied render ``context``.
