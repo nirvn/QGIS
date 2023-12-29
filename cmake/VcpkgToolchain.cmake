@@ -15,7 +15,7 @@ if(NOT VCPKG_TAG STREQUAL VCPKG_INSTALLED_VERSION)
   FetchContent_Declare(vcpkg
       GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
       GIT_TAG ${VCPKG_TAG}
-      PATCH_COMMAND git apply --ignore-whitespace "${CMAKE_CURRENT_LIST_DIR}/32200.patch"
+      #PATCH_COMMAND git apply --ignore-whitespace "${CMAKE_CURRENT_LIST_DIR}/32200.patch"
   )
   FetchContent_MakeAvailable(vcpkg)
 else()
@@ -34,6 +34,10 @@ endif()
 set(VCPKG_INSTALLED_VERSION ${VCPKG_VERSION} CACHE STRING "" FORCE)
 
 message(STATUS "Building with vcpkg libraries version ${VCPKG_INSTALLED_VERSION}")
+
+if(BUILD_WITH_QT6)
+  set(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/.qt6")
+endif()
 
 # Binarycache can only be used on Windows or if mono is available.
 find_program(_VCPKG_MONO mono)
