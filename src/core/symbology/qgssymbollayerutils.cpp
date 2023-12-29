@@ -63,7 +63,23 @@
 
 QString QgsSymbolLayerUtils::encodeColor( const QColor &color )
 {
-  return QStringLiteral( "%1,%2,%3,%4" ).arg( color.red() ).arg( color.green() ).arg( color.blue() ).arg( color.alpha() );
+  switch ( color.spec() )
+  {
+    case QColor::Cmyk:
+      return QStringLiteral( "v2,%1,%2,%3,%4,%5,%6" ).arg( static_cast<int>( color.spec() ) ).arg( color.cyan() ).arg( color.magenta() ).arg( color.yellow() ).arg( color.black() ).arg( color.alpha() );
+
+    case QColor::Rgb:
+    case QColor::Hsv:
+    case QColor::Hsl:
+    case QColor::ExtendedRgb:
+      return QStringLiteral( "v2,%1,%2,%3,%4,%5" ).arg( static_cast<int>( color.spec() ) ).arg( color.red() ).arg( color.green() ).arg( color.blue() ).arg( color.alpha() );
+
+    case QColor::Invalid:
+    default:
+      break;
+  }
+
+  return QString();
 }
 
 QColor QgsSymbolLayerUtils::decodeColor( const QString &str )
@@ -73,16 +89,55 @@ QColor QgsSymbolLayerUtils::decodeColor( const QString &str )
   {
     return QColor( str );
   }
-  int red, green, blue, alpha;
-  red = lst[0].toInt();
-  green = lst[1].toInt();
-  blue = lst[2].toInt();
-  alpha = 255;
-  if ( lst.count() > 3 )
+  else if ( lst.count() < 5 )
   {
-    alpha = lst[3].toInt();
+    int red, green, blue, alpha;
+    red = lst[0].toInt();
+    green = lst[1].toInt();
+    blue = lst[2].toInt();
+    alpha = lst.count() == 4 ? lst[3].toInt() : 255;
+    return QColor( red, green, blue, alpha );
   }
-  return QColor( red, green, blue, alpha );
+  else if ( lst[0] == QStringLiteral( "v2" ) )
+  {
+    QColor::Spec spec = static_cast<QColor::Spec>( lst[1].toInt() );
+    switch ( spec )
+    {
+      case QColor::Cmyk:
+        if ( lst.count() >= 7 )
+        {
+          int cyan, magenta, yellow, black, alpha;
+          cyan = lst[2].toInt();
+          magenta = lst[3].toInt();
+          yellow = lst[4].toInt();
+          black = lst[5].toInt();
+          alpha = lst[6].toInt();
+          return QColor::fromCmyk( cyan, magenta, yellow, black, alpha );
+        }
+        break;
+
+      case QColor::Rgb:
+      case QColor::Hsv:
+      case QColor::Hsl:
+      case QColor::ExtendedRgb:
+        if ( lst.count() >= 6 )
+        {
+          int red, green, blue, alpha;
+          red = lst[2].toInt();
+          green = lst[3].toInt();
+          blue = lst[4].toInt();
+          alpha = lst[5].toInt();
+          return QColor( red, green, blue, alpha );
+        }
+        break;
+
+      case QColor::Invalid:
+      default:
+        break;
+    }
+  }
+
+  return QColor();
 }
 
 QString QgsSymbolLayerUtils::encodeSldAlpha( int alpha )
