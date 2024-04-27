@@ -284,7 +284,9 @@ QgsFeatureIds QgsAbstractRelationEditorWidget::addFeature( const QgsGeometry &ge
   {
     const auto constFieldPairs = mRelation.fieldPairs();
     for ( const QgsRelation::FieldPair &fieldPair : constFieldPairs )
+    {
       keyAttrs.insert( fields.indexFromName( fieldPair.referencingField() ), mFeatureList.first().attribute( fieldPair.referencedField() ) );
+    }
 
     QgsFeature linkFeature;
     if ( !vlTools->addFeature( mRelation.referencingLayer(), keyAttrs, geometry, &linkFeature, this, true, true ) )

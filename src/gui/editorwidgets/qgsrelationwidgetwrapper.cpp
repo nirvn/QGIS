@@ -58,7 +58,26 @@ QWidget *QgsRelationWidgetWrapper::createWidget( QWidget *parent )
 void QgsRelationWidgetWrapper::setFeature( const QgsFeature &feature )
 {
   if ( mWidget && mRelation.isValid() )
-    mWidget->setFeature( feature );
+  {
+    QgsFeature feat( feature );
+    const bool parentFeatureIsNew = std::numeric_limits<QgsFeatureId>::min() == feature.id();
+    if ( parentFeatureIsNew )
+    {
+      const auto constFieldPairs = mRelation.fieldPairs();
+      for ( const QgsRelation::FieldPair &fieldPair : constFieldPairs )
+      {
+        if ( parentFeatureIsNew && mRelation.referencedLayer() && mRelation.referencedLayer()->dataProvider() )
+        {
+          if ( feature.attribute( fieldPair.referencedField() ).toString() == mRelation.referencedLayer()->dataProvider()->defaultValueClause( feature.fieldNameIndex( fieldPair.second ) ) )
+          {
+            // Substitute data provider delivered default values with QVariant() until the feature is saved to insure proper child feature filtering
+            feat.setAttribute( fieldPair.second, QVariant() );
+          }
+        }
+      }
+    }
+    mWidget->setFeature( feat );
+  }
 }
 
 void QgsRelationWidgetWrapper::setMultiEditFeatureIds( const QgsFeatureIds &fids )

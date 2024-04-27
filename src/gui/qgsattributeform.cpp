@@ -427,6 +427,68 @@ bool QgsAttributeForm::saveEdits( QString *error )
         {
           mFeature.setAttributes( updatedFeature.attributes() );
           mLayer->endEditCommand();
+
+          // Gather any relationship children which would have relied on an auto-generated field value
+          QList<QPair<QgsRelation, QgsFeatureRequest>> revisitRelations;
+          const QList<QgsRelation> relations = QgsProject::instance()->relationManager()->referencedRelations( mLayer );
+          for ( const QgsRelation &relation : relations )
+          {
+            const QgsAttributeList rereferencedFields = relation.referencedFields();
+            bool needsRevisit = false;
+            for ( const int fieldIndex : rereferencedFields )
+            {
+              if ( mLayer->dataProvider() && !mLayer->dataProvider()->defaultValueClause( fieldIndex ).isEmpty() )
+              {
+                // Set attribute to QVariant() to build a feature request with the temporary substitute value
+                updatedFeature.setAttribute( fieldIndex, QVariant() );
+                needsRevisit = true;
+              }
+            }
+            if ( needsRevisit )
+            {
+              revisitRelations << qMakePair( relation, relation.getRelatedFeaturesRequest( updatedFeature ) );
+            }
+          }
+
+          if ( !revisitRelations.isEmpty() )
+          {
+            // Mechanism to catch feature id after being added to provider to retrieve the feature with its auto-generated values filled
+            QgsFeatureId createdFeatureId;
+            QMetaObject::Connection connection;
+            connection = connect( mLayer, &QgsVectorLayer::featureAdded, this, [&createdFeatureId]( QgsFeatureId fid ) { createdFeatureId = fid; } );
+
+            // Commit feature to the data provider and retrieve finalized feature
+            if ( mLayer->commitChanges( false ) && mLayer->getFeatures( QgsFeatureRequest().setFilterFid( createdFeatureId ) ).nextFeature( updatedFeature ) )
+            {
+              for ( const QPair<QgsRelation, QgsFeatureRequest> &revisitRelation : std::as_const( revisitRelations ) )
+              {
+                const bool layerIsEditable = revisitRelation.first.referencingLayer()->isEditable();
+                if ( !layerIsEditable )
+                {
+                  revisitRelation.first.referencingLayer()->startEditing();
+                }
+
+                const QList<QgsRelation::FieldPair> fieldPairs = revisitRelation.first.fieldPairs();
+                QgsFeatureIterator it = revisitRelation.first.referencingLayer()->getFeatures( revisitRelation.second );
+                QgsFeature childFeature;
+                while ( it.nextFeature( childFeature ) )
+                {
+                  for ( const QgsRelation::FieldPair &fieldPair : fieldPairs )
+                  {
+                    childFeature.setAttribute( fieldPair.referencingField(), updatedFeature.attribute( fieldPair.referencedField() ) );
+                  }
+                  revisitRelation.first.referencingLayer()->updateFeature( childFeature );
+                }
+
+                if ( !layerIsEditable )
+                {
+                  revisitRelation.first.referencingLayer()->commitChanges();
+                }
+              }
+            }
+            disconnect( connection );
+          }
+
           setMode( QgsAttributeEditorContext::SingleEditMode );
           changedLayer = true;
         }
