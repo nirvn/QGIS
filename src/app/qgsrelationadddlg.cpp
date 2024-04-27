@@ -39,6 +39,10 @@ QgsCreateRelationDialog::QgsCreateRelationDialog( QWidget *parent )
 {
   setupUi( this );
 
+  QFont font = mDataProviderDefaultValueWarning->font();
+  font.setItalic( true );
+  mDataProviderDefaultValueWarning->setFont( font );
+
   mReferencedLayerCombobox = new QgsMapLayerComboBox( this );
   mReferencedLayerCombobox->setFilters( Qgis::LayerFilter::VectorLayer );
   mFieldsMappingTable->setCellWidget( 0, 0, mReferencedLayerCombobox );
@@ -63,15 +67,19 @@ QgsCreateRelationDialog::QgsCreateRelationDialog( QWidget *parent )
 
   addFieldsRow();
   updateDialogButtons();
+  updateReferencedDataProviderDefaultValueFields();
+  updateReferencingDataProviderDefaultValueFields();
 
   connect( mFieldsMappingTable, &QTableWidget::itemSelectionChanged, this, &QgsCreateRelationDialog::updateFieldsMappingButtons );
   connect( mFieldsMappingAddButton, &QToolButton::clicked, this, &QgsCreateRelationDialog::addFieldsRow );
   connect( mFieldsMappingRemoveButton, &QToolButton::clicked, this, &QgsCreateRelationDialog::removeFieldsRow );
   connect( mReferencedLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateDialogButtons );
   connect( mReferencedLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateReferencedFieldsComboBoxes );
+  connect( mReferencedLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateReferencedDataProviderDefaultValueFields );
   connect( mReferencingLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateDialogButtons );
   connect( mReferencingLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateChildRelationsComboBox );
   connect( mReferencingLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateReferencingFieldsComboBoxes );
+  connect( mReferencingLayerCombobox, &QgsMapLayerComboBox::layerChanged, this, &QgsCreateRelationDialog::updateReferencingDataProviderDefaultValueFields );
 }
 
 void QgsCreateRelationDialog::addFieldsRow()
@@ -88,11 +96,15 @@ void QgsCreateRelationDialog::addFieldsRow()
   mFieldsMappingTable->setCellWidget( index, 1, referencingField );
 
   connect( referencedField, &QgsFieldComboBox::fieldChanged, this, &QgsCreateRelationDialog::updateDialogButtons );
+  connect( referencedField, &QgsFieldComboBox::fieldChanged, this, &QgsCreateRelationDialog::updateDataProviderDefaultValueWarning );
   connect( referencingField, &QgsFieldComboBox::fieldChanged, this, &QgsCreateRelationDialog::updateDialogButtons );
+  connect( referencingField, &QgsFieldComboBox::fieldChanged, this, &QgsCreateRelationDialog::updateDataProviderDefaultValueWarning );
 
   updateFieldsMappingButtons();
   updateFieldsMappingHeaders();
   updateDialogButtons();
+  updateReferencedDataProviderDefaultValueFields();
+  updateReferencingDataProviderDefaultValueFields();
 }
 
 void QgsCreateRelationDialog::removeFieldsRow()
@@ -126,6 +138,80 @@ void QgsCreateRelationDialog::updateFieldsMappingButtons()
   const bool isRemoveButtonEnabled = !isLayersRowSelected && selectedRowsCount <= rowsCount - 2;
 
   mFieldsMappingRemoveButton->setEnabled( isRemoveButtonEnabled );
+}
+
+void QgsCreateRelationDialog::updateReferencedDataProviderDefaultValueFields()
+{
+  mReferencedDataProviderDefaultValueFields.clear();
+
+  QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( mReferencedLayerCombobox->currentLayer() );
+  if ( !vl || !vl->dataProvider() )
+  {
+    return;
+  }
+
+  const QgsFields fields = vl->dataProvider()->fields();
+  for ( int i = 0; i < fields.size(); i++ )
+  {
+    if ( !vl->dataProvider()->defaultValueClause( i ).isEmpty() )
+    {
+      mReferencedDataProviderDefaultValueFields << fields.field( i ).name();
+    }
+  }
+
+  updateDataProviderDefaultValueWarning();
+}
+
+void QgsCreateRelationDialog::updateReferencingDataProviderDefaultValueFields()
+{
+  mReferencingDataProviderDefaultValueFields.clear();
+
+  QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( mReferencingLayerCombobox->currentLayer() );
+  if ( !vl || !vl->dataProvider() )
+  {
+    return;
+  }
+
+  const QgsFields fields = vl->dataProvider()->fields();
+  for ( int i = 0; i < fields.size(); i++ )
+  {
+    if ( !vl->dataProvider()->defaultValueClause( i ).isEmpty() )
+    {
+      mReferencingDataProviderDefaultValueFields << fields.field( i ).name();
+    }
+  }
+
+  updateDataProviderDefaultValueWarning();
+}
+
+void QgsCreateRelationDialog::updateDataProviderDefaultValueWarning()
+{
+  QStringList fieldsWarning;
+  for ( int i = 0, l = mFieldsMappingTable->rowCount(); i < l; i++ )
+  {
+    // ignore the layers row
+    if ( i == 0 )
+      continue;
+
+    if ( mReferencedDataProviderDefaultValueFields.contains( static_cast<QgsFieldComboBox *>( mFieldsMappingTable->cellWidget( i, 0 ) )->currentField() ) )
+    {
+      fieldsWarning << static_cast<QgsFieldComboBox *>( mFieldsMappingTable->cellWidget( i, 0 ) )->currentField();
+    }
+    if ( mReferencingDataProviderDefaultValueFields.contains( static_cast<QgsFieldComboBox *>( mFieldsMappingTable->cellWidget( i, 1 ) )->currentField() ) )
+    {
+      fieldsWarning << static_cast<QgsFieldComboBox *>( mFieldsMappingTable->cellWidget( i, 1 ) )->currentField();
+    }
+  }
+
+  if ( !fieldsWarning.isEmpty() )
+  {
+    mDataProviderDefaultValueWarning->setText( tr( "The following mapped fields rely on default values from the data provider: %1.\n\nThis requires for newly added features to be committed to the data provider to insure paired fields share the correct values." ).arg( fieldsWarning.join( QLatin1String( ", " ) ) ) );
+    mDataProviderDefaultValueWarning->setVisible( true );
+  }
+  else
+  {
+    mDataProviderDefaultValueWarning->setVisible( false );
+  }
 }
 
 void QgsCreateRelationDialog::updateFieldsMappingHeaders()

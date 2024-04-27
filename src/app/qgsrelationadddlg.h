@@ -59,6 +59,9 @@ class APP_EXPORT QgsCreateRelationDialog : public QDialog, private Ui::QgsRelati
     void updateChildRelationsComboBox();
     void updateReferencedFieldsComboBoxes();
     void updateReferencingFieldsComboBoxes();
+    void updateReferencedDataProviderDefaultValueFields();
+    void updateReferencingDataProviderDefaultValueFields();
+    void updateDataProviderDefaultValueWarning();
 
   private:
     bool isDefinitionValid();
@@ -66,6 +69,9 @@ class APP_EXPORT QgsCreateRelationDialog : public QDialog, private Ui::QgsRelati
 
     QgsMapLayerComboBox *mReferencedLayerCombobox = nullptr;
     QgsMapLayerComboBox *mReferencingLayerCombobox = nullptr;
+
+    QStringList mReferencedDataProviderDefaultValueFields;
+    QStringList mReferencingDataProviderDefaultValueFields;
 
 };
 
