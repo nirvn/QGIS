@@ -460,6 +460,7 @@ bool QgsAttributeForm::saveEdits( QString *error )
             // Commit feature to the data provider and retrieve finalized feature
             if ( mLayer->commitChanges( false ) && mLayer->getFeatures( QgsFeatureRequest().setFilterFid( createdFeatureId ) ).nextFeature( updatedFeature ) )
             {
+              mContext.mainMessageBar()->pushInfo( tr( "Atribute Form" ), tr( "The vector layer ‘%1’ has been saved to insure values from the data provider are reflected in existing relationships" ).arg( mLayer->name() ) );
               for ( const QPair<QgsRelation, QgsFeatureRequest> &revisitRelation : std::as_const( revisitRelations ) )
               {
                 const bool layerIsEditable = revisitRelation.first.referencingLayer()->isEditable();
