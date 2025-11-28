@@ -54,6 +54,7 @@
 #include "qgsmaptooleditmeshframe.h"
 #include "qgssettingsregistrycore.h"
 #include "qgsmaptoolmodifyannotation.h"
+#include "qgsmaptoolselectannotation.h"
 
 //
 // QgsAppMapTools
@@ -105,6 +106,7 @@ QgsAppMapTools::QgsAppMapTools( QgsMapCanvas *canvas, QgsAdvancedDigitizingDockW
   mTools.insert( Tool::ChangeLabelProperties, new QgsMapToolChangeLabelProperties( canvas, cadDock ) );
   mTools.insert( Tool::EditMeshFrame, new QgsMapToolEditMeshFrame( canvas ) );
   mTools.insert( Tool::AnnotationEdit, new QgsMapToolModifyAnnotation( canvas, cadDock ) );
+  mTools.insert( Tool::AnnotationSelect, new QgsMapToolSelectAnnotation( canvas, cadDock ) );
 }
 
 QgsAppMapTools::~QgsAppMapTools()

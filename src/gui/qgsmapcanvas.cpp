@@ -137,6 +137,7 @@ QgsMapCanvas::QgsMapCanvas( QWidget *parent )
   setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
   setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
   setMouseTracking( true );
+  viewport()->setMouseTracking( true );
   setFocusPolicy( Qt::StrongFocus );
 
   mScreenHelper = new QgsScreenHelper( this );
@@ -2550,6 +2551,7 @@ void QgsMapCanvas::mousePressEvent( QMouseEvent *e )
       {
         auto me = std::make_unique<QgsMapMouseEvent>( this, e );
         mMapTool->canvasPressEvent( me.get() );
+        QGraphicsView::mousePressEvent( e );
       }
     }
   }
@@ -2599,6 +2601,7 @@ void QgsMapCanvas::mouseReleaseEvent( QMouseEvent *e )
     {
       auto me = std::make_unique<QgsMapMouseEvent>( this, e );
       mMapTool->canvasReleaseEvent( me.get() );
+      QGraphicsView::mouseReleaseEvent( e );
     }
   }
 
@@ -2778,6 +2781,7 @@ void QgsMapCanvas::mouseMoveEvent( QMouseEvent *e )
     {
       auto me = std::make_unique<QgsMapMouseEvent>( this, e );
       mMapTool->canvasMoveEvent( me.get() );
+      QGraphicsView::mouseMoveEvent( e );
     }
   }
 

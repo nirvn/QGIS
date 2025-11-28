@@ -565,6 +565,7 @@ bool QgsGraphicsViewMouseHandles::shouldBlockEvent( QInputEvent * ) const
 
 void QgsGraphicsViewMouseHandles::startMove( QPointF sceneCoordPos )
 {
+  qDebug() << "startMove";
   //save current cursor position
   mMouseMoveStartPos = sceneCoordPos;
   //save current item geometry
@@ -579,6 +580,7 @@ void QgsGraphicsViewMouseHandles::startMove( QPointF sceneCoordPos )
   // Explicitly call grabMouse to ensure the mouse handles receive the subsequent mouse move events.
   if ( mView->scene()->mouseGrabberItem() != this )
   {
+    qDebug() << "grabMouse!";
     grabMouse();
   }
 }
@@ -614,6 +616,7 @@ void QgsGraphicsViewMouseHandles::hoverLeaveEvent( QGraphicsSceneHoverEvent *eve
 
 void QgsGraphicsViewMouseHandles::mousePressEvent( QGraphicsSceneMouseEvent *event )
 {
+  qDebug() << "mousePressEvent";
   if ( event->button() != Qt::LeftButton )
   {
     event->ignore();
@@ -629,6 +632,8 @@ void QgsGraphicsViewMouseHandles::mousePressEvent( QGraphicsSceneMouseEvent *eve
   mBeginHandleHeight = rect().height();
   //type of mouse move action
   mCurrentMouseMoveAction = mouseActionForPosition( event->pos() );
+
+  qDebug() << mCurrentMouseMoveAction;
 
   hideAlignItems();
 
@@ -689,6 +694,7 @@ void QgsGraphicsViewMouseHandles::resetStatusBar()
 
 void QgsGraphicsViewMouseHandles::mouseMoveEvent( QGraphicsSceneMouseEvent *event )
 {
+  qDebug() << "mouseMoveEvent";
   if ( isDragging() )
   {
     //currently dragging a selection
@@ -919,6 +925,7 @@ void QgsGraphicsViewMouseHandles::updateHandles()
     //no items selected, hide handles
     hide();
   }
+
   //force redraw
   update();
 }
