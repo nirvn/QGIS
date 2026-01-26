@@ -129,6 +129,8 @@ void QgsEditorWidgetWrapper::updateConstraintWidgetStatus()
         break;
     }
   }
+  widget()->style()->unpolish( widget() );
+  widget()->style()->polish( widget() );
 }
 
 bool QgsEditorWidgetWrapper::setFormFeatureAttribute( const QString &attributeName, const QVariant &attributeValue )
